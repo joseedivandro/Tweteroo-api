@@ -6,7 +6,7 @@ const app = express() // app do servidor
 
 
 app.use(cors())
-app.use(express.json)
+app.use(express.json())
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))
 
 app.post("./sign-up", (req, res)=> {

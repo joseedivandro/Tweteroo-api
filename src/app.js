@@ -5,6 +5,7 @@ const PORT =5000;
 const app = express() // app do servidor 
 
 const usuarios = []
+const serverTweets =[]
 
 app.use(cors())
 app.use(express.json())
@@ -36,11 +37,13 @@ app.post("/tweets", (req, res) => {
 
     const userRegistered = usuarios.find(item => item.username === twetter.username)
 
-    if (userRegistered) {
+    if (!userRegistered) {
         serverTweets.push(twetter)
         return res.status(201).send("OK")
-    }
+    }else{
     return res.status(401).send("UNAUTHORIZED")
+    }
 })
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))
+

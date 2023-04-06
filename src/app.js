@@ -34,7 +34,7 @@ app.post("/tweets", (req, res) => {
     if (!twetter.tweet) return res.status(400).send("Todos os campos são obrigatórios!")
     if (!(typeof twetter.tweet === "string")) return res.sendStatus(400)
 
-    const userRegistered = serverUsers.find(item => item.username === twetter.username)
+    const userRegistered = usuarios.find(item => item.username === twetter.username)
 
     if (userRegistered) {
         serverTweets.push(twetter)

@@ -6,8 +6,6 @@ const app = express() // app do servidor
 
 const serverTwetts =[]
 const usuarios =[]
-const TWEETS_PER_PAGE = 10;
-
 
 app.use(cors())
 app.use(express.json())
@@ -32,31 +30,35 @@ app.post("/sign-up", (req, res)=> {
 })
 
 
-app.get("/tweets", (req, res) => {
-    const { page } = req.query;
-    const pageLimit = 10;
-  
-    let startIndex = 0;
-    if (page && Number(page) > 0) {
-      startIndex = (Number(page) - 1) * pageLimit;
+app.post("/tweets", (req, res) => {
+    const twetter = req.body
+    const { user } = req.headers
+
+    if (!twetter.tweet) return res.status(400).send("Todos os campos são obrigatórios!")
+    if (!(typeof twetter.tweet === "string")) return res.sendStatus(400)
+
+    if (user) {
+        const userRegistered = usuarios.find(item => item.username === user)
+
+        if (userRegistered) {
+            serverTwetts.push({username: user, tweet: twetter.tweet})
+            return res.status(201).send("OK")
+        }
+        return res.status(400).send("UNAUTHORIZED")
     }
-  
-    const tweets = serverTwetts.slice().reverse().slice(startIndex, startIndex + pageLimit);
-  
-    const tweetsWithAvatar = tweets.map(tweet => {
-      const user = serverTwetts.find(u => u.username === tweet.username);
-      return {
-        username: tweet.username,
-        avatar: user ? user.avatar : null,
-        tweet: tweet.tweet
-      }
-    });
-  
-    res.send(tweetsWithAvatar);
-  });
 
+    const userRegistered = usuarios.find(item => item.username === twetter.username)
 
-  app.get("/tweets", (req, res) => {
+    if (userRegistered) {
+        serverTwetts.push(twetter)
+        return res.status(200).send("OK")
+    }
+
+    return res.status(400).send("UNAUTHORIZED")
+
+})
+
+app.get("/tweets", (req, res) => {
     const { query } = req
     const urlPage = Number(query.page)
 
@@ -88,5 +90,7 @@ app.get("/tweets", (req, res) => {
 
     res.send(pageTweets)
 })
+
+
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))

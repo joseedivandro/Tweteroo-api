@@ -58,4 +58,37 @@ app.post("/tweets", (req, res) => {
 
 })
 
+
+app.get("/tweets", (req, res) => {
+  const urlPage = Number(req.query.page);
+  const allTweets = [...serverTwetts].reverse();
+  const tweetPages = 10;
+
+  if (urlPage <= 0 || isNaN(urlPage)) {
+    return res.status(400).send("Informe uma página válida!");
+  }
+
+  const Paginacao = paginateTweets(allTweets, urlPage, tweetPages);
+  const newTweet = adicionaAvatar(Paginacao);
+
+  return res.send(newTweet);
+});
+
+function paginateTweets(tweets, page, tweetPages) {
+  const indexPage = (page - 1) * tweetPages;
+  const endIndex = indexPage + tweetPages;
+  return tweets.slice(indexPage, endIndex);
+}
+
+function adicionaAvatar(tweets) {
+  return tweets.map(tweet => {
+    const user = usuarios.find(u => u.username === tweet.username);
+    return {
+      username: tweet.username,
+      avatar: user?.avatar || null,
+      tweet: tweet.tweet,
+    };
+  });
+}
+
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))

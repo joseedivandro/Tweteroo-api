@@ -4,8 +4,8 @@ import cors from "cors";
 const PORT =5000;
 const app = express() // app do servidor 
 
-const usuarios = []
-const serverTweets =[]
+const serverTwetts =[]
+const usuarios =[]
 
 app.use(cors())
 app.use(express.json())
@@ -32,18 +32,30 @@ app.post("/sign-up", (req, res)=> {
 
 app.post("/tweets", (req, res) => {
     const twetter = req.body
+    const { user } = req.headers
+
     if (!twetter.tweet) return res.status(400).send("Todos os campos são obrigatórios!")
     if (!(typeof twetter.tweet === "string")) return res.sendStatus(400)
 
+    if (user) {
+        const userRegistered = usuarios.find(item => item.username === user)
+
+        if (userRegistered) {
+            serverTwetts.push({username: user, tweet: twetter.tweet})
+            return res.status(201).send("OK")
+        }
+        return res.status(400).send("UNAUTHORIZED")
+    }
+
     const userRegistered = usuarios.find(item => item.username === twetter.username)
 
-    if (!userRegistered) {
-        serverTweets.push(twetter)
-        return res.status(201).send("OK")
-    }else{
-    return res.status(401).send("UNAUTHORIZED")
+    if (userRegistered) {
+        serverTwetts.push(twetter)
+        return res.status(200).send("OK")
     }
+
+    return res.status(400).send("UNAUTHORIZED")
+
 })
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))
-

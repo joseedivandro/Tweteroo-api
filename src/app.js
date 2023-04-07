@@ -58,39 +58,81 @@ app.post("/tweets", (req, res) => {
 
 })
 
-app.get("/tweets", (req, res) => {
-    const { query } = req
-    const page = parseInt(query.page) || 1
-    const perPage = 10
-  
-    const startIndex = (page - 1) * perPage
-    const endIndex = startIndex + perPage
-  
-    const tweets = serverTwetts.slice().reverse()
-    const totalTweets = tweets.length
-  
-    const totalPages = Math.ceil(totalTweets / perPage)
-  
-    if (totalTweets === 0) {
-      return res.send([])
-    }
-  
-    if (page > totalPages) {
-      return res.status(404).send("Page not found")
-    }
-  
-    const tweetsOnPage = tweets.slice(startIndex, endIndex)
-    const tweetsWithAvatar = tweetsOnPage.map((tweet) => {
-      const user = usuarios.find((u) => u.username === tweet.username)
-      return { ...tweet, avatar: user ? user.avatar : null }
-    })
-  
-    res.send({
-      tweets: tweetsWithAvatar,
-      currentPage: page,
-      totalPages: totalPages,
-    })
-  })
 
+function addAvatarToTweets(refTweets) {
+    if (!refTweets) return [];
+  
+    const refTweetsWithAvatar = refTweets.map((item) => {
+      const nameAndAvatar = serverTwetts.find((_item) => _item.username === item.username);
+      return {
+        username: item.username,
+        avatar: nameAndAvatar.avatar,
+        tweet: item.tweet,
+      };
+    });
+  
+    return refTweetsWithAvatar;
+  }
+  
+  function divideTweets(tweetsToDivide, arrSize) {
+    const dividedTweets = [];
+  
+    let mainCounter = 1; // starts with 1 to match urlPage when loading tweets
+    let auxCounter = 0;
+  
+    for (let i = 0; i < tweetsToDivide.length; i += arrSize) {
+      dividedTweets[mainCounter] = [];
+      do {
+        dividedTweets[mainCounter].push(tweetsToDivide[auxCounter]);
+        auxCounter++;
+      } while (dividedTweets[mainCounter].length < arrSize && tweetsToDivide[auxCounter]);
+      mainCounter++;
+    }
+  
+    return dividedTweets;
+  }
+  
+  app.get('/tweets/:username', (req, res) => {
+    const { username } = req.params;
+  
+    allTweets = addAvatarToTweets(serverTwetts.reverse());
+  
+    const userTweets = allTweets.filter((item) => item.username === username);
+  
+    res.send(userTweets);
+  });
+  
+  app.get('/tweets', (req, res) => {
+    let dividedTweets = [];
+  
+    const { query } = req;
+    const urlPage = Number(query.page);
+  
+    if (urlPage <= 0) return res.status(400).send('Informe uma página válida!');
+  
+    allTweets = [...serverTwetts].reverse();
+  
+    if (allTweets) {
+      if (!urlPage) {
+        pageTweets = addAvatarToTweets(allTweets.slice(0, 10));
+        return res.send(pageTweets);
+      }
+  
+      if (allTweets.length > 10) {
+        dividedTweets = divideTweets(allTweets, 10);
+  
+        if (dividedTweets) {
+          pageTweets = addAvatarToTweets(dividedTweets[urlPage]);
+  
+          if (pageTweets) return res.send(pageTweets);
+        }
+        return res.send([]);
+      }
+  
+      pageTweets = addAvatarToTweets(allTweets);
+  
+      return res.send(pageTweets);
+    }
+  });
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))

@@ -6,6 +6,41 @@ const app = express() // app do servidor
 
 const serverTwetts =[]
 const usuarios =[]
+let tweetComplete = []
+let pagina = []
+
+
+function addAvatarToTweets(refTweets) {
+
+    if (!refTweets) return
+
+    const refTweetsWithAvatar = refTweets.map(item => {
+        const nameAndAvatar = usuarios.find(_item => _item.username === item.username)
+        return {
+            username: item.username,
+            avatar: nameAndAvatar.avatar,
+            tweet: item.tweet
+        }
+    })
+    return refTweetsWithAvatar
+}
+
+function divideTweets(tweetsToDivide, arrSize) {
+    const dividedTweets = []
+
+    let mainCounter = 1 // starts with 1 to match urlPage when loading tweets
+    let auxCounter = 0
+
+    for (let i = 0; i < tweetsToDivide.length; i += arrSize) {
+        dividedTweets[mainCounter] = []
+        do {
+            dividedTweets[mainCounter].push(tweetsToDivide[auxCounter])
+            auxCounter++
+        } while (dividedTweets[mainCounter].length < arrSize && tweetsToDivide[auxCounter])
+        mainCounter++
+    }
+    return dividedTweets
+}
 
 app.use(cors())
 app.use(express.json())
@@ -58,81 +93,37 @@ app.post("/tweets", (req, res) => {
 
 })
 
+app.get("/tweets", (req, res) => {
 
-function addAvatarToTweets(refTweets) {
-    if (!refTweets) return [];
-  
-    const refTweetsWithAvatar = refTweets.map((item) => {
-      const nameAndAvatar = serverTwetts.find((_item) => _item.username === item.username);
-      return {
-        username: item.username,
-        avatar: nameAndAvatar.avatar,
-        tweet: item.tweet,
-      };
-    });
-  
-    return refTweetsWithAvatar;
-  }
-  
-  function divideTweets(tweetsToDivide, arrSize) {
-    const dividedTweets = [];
-  
-    let mainCounter = 1; // starts with 1 to match urlPage when loading tweets
-    let auxCounter = 0;
-  
-    for (let i = 0; i < tweetsToDivide.length; i += arrSize) {
-      dividedTweets[mainCounter] = [];
-      do {
-        dividedTweets[mainCounter].push(tweetsToDivide[auxCounter]);
-        auxCounter++;
-      } while (dividedTweets[mainCounter].length < arrSize && tweetsToDivide[auxCounter]);
-      mainCounter++;
-    }
-  
-    return dividedTweets;
-  }
-  
-  app.get('/tweets/:username', (req, res) => {
-    const { username } = req.params;
-  
-    allTweets = addAvatarToTweets(serverTwetts.reverse());
-  
-    const userTweets = allTweets.filter((item) => item.username === username);
-  
-    res.send(userTweets);
-  });
-  
-  app.get('/tweets', (req, res) => {
-    let dividedTweets = [];
-  
-    const { query } = req;
-    const urlPage = Number(query.page);
-  
-    if (urlPage <= 0) return res.status(400).send('Informe uma página válida!');
-  
-    allTweets = [...serverTwetts].reverse();
-  
-    if (allTweets) {
-      if (!urlPage) {
-        pageTweets = addAvatarToTweets(allTweets.slice(0, 10));
-        return res.send(pageTweets);
-      }
-  
-      if (allTweets.length > 10) {
-        dividedTweets = divideTweets(allTweets, 10);
-  
-        if (dividedTweets) {
-          pageTweets = addAvatarToTweets(dividedTweets[urlPage]);
-  
-          if (pageTweets) return res.send(pageTweets);
+    let dividedTweets = []
+
+    const { query } = req
+    const urlPage = Number(query.page)
+
+    if (urlPage <= 0) return res.status(400).send("Informe uma página válida!")
+
+    tweetComplete = [...serverTwetts].reverse()
+
+    if (tweetComplete) {
+
+        if (!urlPage) {
+            pagina = addAvatarToTweets(tweetComplete.slice(0, 10))
+            return res.send(pagina)
         }
-        return res.send([]);
-      }
-  
-      pageTweets = addAvatarToTweets(allTweets);
-  
-      return res.send(pageTweets);
+
+        if (tweetComplete.length > 10) {
+            dividedTweets = divideTweets(tweetComplete, 10)
+
+            if (dividedTweets) pagina = addAvatarToTweets(dividedTweets[urlPage])
+
+            if (pagina) return res.send(pagina)
+            else return res.send([])
+        } else {
+            pagina = addAvatarToTweets(tweetComplete)
+            return res.send(pagina)
+        }
     }
-  });
+})
+
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))

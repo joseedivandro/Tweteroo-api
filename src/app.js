@@ -59,36 +59,27 @@ app.post("/tweets", (req, res) => {
 })
 
 
-app.get("/tweets", (req, res) => {
-  const urlPage = Number(req.query.page);
-  const allTweets = [...serverTwetts].reverse();
-  const tweetPages = 10;
+const usersByUserName = {}
+for (const user of usuarios) {
+  usersByUserName[user.username] = user.avatar
+}
 
-  if (urlPage <= 0 || isNaN(urlPage)) {
-    return res.status(400).send("Informe uma página válida!");
+app.get("/tweets", (req, res) => {
+  const page = Number(req.query.page)
+  if (!Number.isInteger(page) || page <= 0) {
+    return res.status(400).send("Informe uma página válida!")
   }
 
-  const Paginacao = paginateTweets(allTweets, urlPage, tweetPages);
-  const newTweet = adicionaAvatar(Paginacao);
+  const startIndex = (page - 1) * 10
+  const endIndex = startIndex + 10
+  const tweets = usuarios.slice().reverse().slice(startIndex, endIndex)
+  const tweetsWithAvatar = tweets.map((tweet) => {
+    const avatar = usersByUserName[tweet.username]
+    return { username: tweet.username, avatar, tweet: tweet.tweet }
+  })
 
-  return res.send(newTweet);
-});
+  res.send(tweetsWithAvatar)
+})
 
-function paginateTweets(tweets, page, tweetPages) {
-  const indexPage = (page - 1) * tweetPages;
-  const endIndex = indexPage + tweetPages;
-  return tweets.slice(indexPage, endIndex);
-}
-
-function adicionaAvatar(tweets) {
-  return tweets.map(tweet => {
-    const user = usuarios.find(u => u.username === tweet.username);
-    return {
-      username: tweet.username,
-      avatar: user?.avatar || null,
-      tweet: tweet.tweet,
-    };
-  });
-}
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))

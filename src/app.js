@@ -60,37 +60,37 @@ app.post("/tweets", (req, res) => {
 
 app.get("/tweets", (req, res) => {
     const { query } = req
-    const urlPage = Number(query.page)
-
-    if (urlPage <= 0) {
-        return res.status(400).send("DEU RUIM")
+    const page = parseInt(query.page) || 1
+    const perPage = 10
+  
+    const startIndex = (page - 1) * perPage
+    const endIndex = startIndex + perPage
+  
+    const tweets = serverTwetts.slice().reverse()
+    const totalTweets = tweets.length
+  
+    const totalPages = Math.ceil(totalTweets / perPage)
+  
+    if (totalTweets === 0) {
+      return res.send([])
     }
-
-    const tweets = [...serverTwetts].reverse()
-    const tweetsWithAvatar = []
-
-    tweets.forEach(tweet => {
-        const user = usuarios.find(user => user.username === tweet.username)
-        if (user) {
-            tweetsWithAvatar.push({
-                username: tweet.username,
-                tweet: tweet.tweet,
-                avatar: user.avatar
-            })
-        }
+  
+    if (page > totalPages) {
+      return res.status(404).send("Page not found")
+    }
+  
+    const tweetsOnPage = tweets.slice(startIndex, endIndex)
+    const tweetsWithAvatar = tweetsOnPage.map((tweet) => {
+      const user = usuarios.find((u) => u.username === tweet.username)
+      return { ...tweet, avatar: user ? user.avatar : null }
     })
-
-    if (tweetsWithAvatar.length === 0) {
-        return res.send([])
-    }
-
-    const startIndex = (urlPage - 1) * 10
-    const endIndex = startIndex + 10
-    const pageTweets = tweetsWithAvatar.slice(startIndex, endIndex)
-
-    res.send(pageTweets)
-})
-
+  
+    res.send({
+      tweets: tweetsWithAvatar,
+      currentPage: page,
+      totalPages: totalPages,
+    })
+  })
 
 
 app.listen(PORT, () => console.log(`rodando servidor na porta ${PORT}`))

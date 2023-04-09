@@ -28,7 +28,7 @@ function addAvatarToTweets(refTweets) {
 function divideTweets(tweetsToDivide, arrSize) {
     const dividedTweets = []
 
-    let mainCounter = 1 // starts with 1 to match urlPage when loading tweets
+    let mainCounter = 1 
     let auxCounter = 0
 
     for (let i = 0; i < tweetsToDivide.length; i += arrSize) {
